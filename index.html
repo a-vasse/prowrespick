@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pick 'Em • Any Event</title>
+  <title>プロレス Pick 'Em</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -15,8 +15,24 @@
 <body class="min-h-screen text-white pb-12">
   <div class="max-w-5xl mx-auto p-4">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-4xl font-bold flex items-center gap-3"><span class="text-yellow-400">🤼‍♂️</span> PICK 'EM</h1>
-      <div class="text-sm text-gray-400">Reusable for any event • WrestleMania 42 ready</div>
+      <h1 class="text-4xl font-bold flex items-center gap-3">
+        <span class="text-yellow-400">🤼‍♂️</span> プロレス PICK 'EM
+      </h1>
+
+      <div class="flex gap-3">
+        <button onclick="newEvent()"
+                class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-2xl flex items-center gap-2 text-sm">
+          <i class="fas fa-plus"></i> New Event
+        </button>
+        <button onclick="exportEvent()"
+                class="px-5 py-2.5 bg-yellow-400 hover:bg-yellow-300 text-black font-bold rounded-2xl flex items-center gap-2 text-sm">
+          <i class="fas fa-download"></i> Export
+        </button>
+        <button onclick="showImportModal()"
+                class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-2xl flex items-center gap-2 text-sm">
+          <i class="fas fa-upload"></i> Import
+        </button>
+      </div>
     </div>
 
     <div class="flex border-b border-gray-700 mb-8 text-lg font-medium">
@@ -30,8 +46,9 @@
     <!-- SETUP TAB -->
     <div id="panel0" class="bg-gray-900 rounded-3xl p-8">
       <h2 class="text-2xl font-bold mb-4">Event Name</h2>
-      <input id="eventName" type="text" value="WrestleMania 42"
-             class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3 text-xl mb-8">
+      <input id="eventName" type="text" placeholder="Enter Event Name..."
+       oninput="updateEventName()"
+       class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3 text-xl mb-8">
 
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold">Matches</h2>
@@ -58,23 +75,36 @@
       <div id="predictionsContent" class="space-y-12"></div>
     </div>
 
-    <div id="panel3" class="hidden bg-gray-900 rounded-3xl p-8">Results tab coming next...</div>
-    <div id="panel4" class="hidden bg-gray-900 rounded-3xl p-8">Leaderboard tab coming next...</div>
+    <!-- Results Panel -->
+    <div id="panel3" class="hidden bg-gray-900 rounded-3xl p-8">
+      <h2 class="text-2xl font-bold mb-6">Results • Enter Real Winners</h2>
+      <div id="resultsContent" class="space-y-8"></div>
+    </div>
+
+    <!-- Leaderboard Panel -->
+    <div id="panel4" class="hidden bg-gray-900 rounded-3xl p-8">
+      <h2 class="text-3xl font-bold mb-8 flex justify-between items-center">
+        Leaderboard
+        <span id="progressText" class="text-yellow-400 text-lg font-normal"></span>
+      </h2>
+      <div id="leaderboardTable" class="space-y-4"></div>
+      <div id="finalWinner" class="hidden mt-12 text-center py-12 bg-gradient-to-b from-yellow-900/30 to-transparent rounded-3xl"></div>
+    </div>
   </div>
 
   <script>
-    // === DATA MODEL (this is the heart of the app) ===
-    let matches = []; // Each match: {id, title, participants: ["Option 1", "Option 2"], actualWinner: null}
+    // === MATCHES DATA (now starts empty) ===
+    let matches = [];
 
-    // Default WrestleMania 42 matches (you can edit/delete anytime)
+    let eventName = "";
+
+    // Update event name when user types
+    function updateEventName() {
+      eventName = document.getElementById('eventName').value.trim();
+    }
+
     function loadDefaultMatches() {
-      matches = [
-        {id:1, title:"Undisputed WWE Championship", participants:["Cody Rhodes (c)", "Randy Orton"], actualWinner:null},
-        {id:2, title:"Women's World Championship", participants:["Stephanie Vaquer (c)", "Liv Morgan"], actualWinner:null},
-        {id:3, title:"Singles Match", participants:["Seth Rollins", "Gunther"], actualWinner:null},
-        {id:4, title:"Women's Intercontinental Championship", participants:["AJ Lee (c)", "Becky Lynch"], actualWinner:null},
-        {id:5, title:"Women's Tag Team Championship Fatal 4-Way", participants:["Nia Jax & Lash Legend (c)", "Charlotte Flair & Alexa Bliss", "Bayley & Lyra Valkyria", "The Bella Twins"], actualWinner:null}
-      ];
+      matches = [];
     }
 
     // Render matches in Setup tab
@@ -180,14 +210,15 @@
     }
 
     function deletePlayer(id) {
-      if (players.length <= 1) {
-        alert("You need at least one player!");
-        return;
-      }
       players = players.filter(p => p.id !== id);
-      renderPlayers();
-    }
 
+      // If no players left, just show empty state
+      if (players.length === 0) {
+        renderPlayers();
+      } else {
+        renderPlayers();
+      }
+}
     function updatePlayerName(id, newName) {
       const player = players.find(p => p.id === id);
       if (player) player.name = newName;
@@ -274,6 +305,133 @@
 
       renderPredictions();
     };
+
+    // ====================== RESULTS & SCORING ======================
+
+    // Render Results tab
+    function renderResults() {
+      const container = document.getElementById('resultsContent');
+
+      if (matches.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-400 py-12">No matches yet. Add some in Setup.</p>`;
+        return;
+      }
+
+      let html = '';
+
+      matches.forEach(match => {
+        const isScored = !!match.actualWinner;
+
+        html += `
+          <div class="bg-gray-800 rounded-3xl p-6 ${isScored ? 'border-2 border-yellow-400' : ''}">
+            <div class="flex justify-between items-center mb-4">
+              <div class="font-bold text-lg">${match.title}</div>
+              ${isScored ? `<span class="text-green-400 text-sm font-medium">✓ SCORED</span>` : ''}
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+              ${match.participants.map(option => `
+                <button
+                  onclick="setActualWinner(${match.id}, '${option.replace(/'/g, "\\'")}')"
+                  class="flex-1 min-w-[160px] px-6 py-4 rounded-2xl text-left transition-all
+                    ${match.actualWinner === option ?
+                      'bg-yellow-400 text-black font-bold' :
+                      'bg-gray-700 hover:bg-gray-600'}">
+                  ${option}
+                </button>
+              `).join('')}
+            </div>
+          </div>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Set the real winner of a match
+    window.setActualWinner = function(matchId, winner) {
+      const match = matches.find(m => m.id === matchId);
+      if (match) {
+        match.actualWinner = winner;
+        renderResults();
+        calculateScores();        // Auto-update leaderboard
+      }
+    };
+
+    // Calculate scores and render leaderboard
+    function calculateScores() {
+      const scoredMatches = matches.filter(m => m.actualWinner !== null);
+      const totalMatches = matches.length;
+
+      // Calculate points for each player
+      const standings = players.map(player => {
+        let points = 0;
+
+        matches.forEach(match => {
+          if (match.actualWinner && player.picks[match.id] === match.actualWinner) {
+            points++;
+          }
+        });
+
+        return {
+          name: player.name,
+          points: points,
+          correct: points,
+          totalPossible: totalMatches
+        };
+      });
+
+      // Sort by points (highest first)
+      standings.sort((a, b) => b.points - a.points);
+
+      // Render leaderboard
+      let tableHTML = '';
+
+      standings.forEach((player, index) => {
+        const percentage = totalMatches > 0 ? Math.round((player.points / totalMatches) * 100) : 0;
+
+        tableHTML += `
+          <div class="flex items-center justify-between bg-gray-800 rounded-2xl px-6 py-5">
+            <div class="flex items-center gap-4">
+              <span class="text-2xl font-bold text-yellow-400 w-8">${index + 1}</span>
+              <span class="text-xl">${player.name}</span>
+            </div>
+            <div class="text-right">
+              <div class="text-3xl font-bold">${player.points}</div>
+              <div class="text-xs text-gray-400">${percentage}% correct</div>
+            </div>
+          </div>`;
+      });
+
+      document.getElementById('leaderboardTable').innerHTML = tableHTML;
+      document.getElementById('progressText').textContent =
+        `${scoredMatches.length}/${totalMatches} matches scored`;
+
+      // Final winner celebration
+      const finalDiv = document.getElementById('finalWinner');
+      if (scoredMatches.length === totalMatches && totalMatches > 0) {
+        const champion = standings[0];
+        finalDiv.innerHTML = `
+          <div class="text-5xl mb-4">🏆</div>
+          <div class="text-4xl font-black text-yellow-400">${champion.name}</div>
+          <div class="text-2xl mt-3">is the Pick 'Em Champion!</div>
+          <div class="text-xl mt-8">${champion.points} / ${totalMatches} correct picks</div>
+        `;
+        finalDiv.classList.remove('hidden');
+        launchConfetti();
+      } else {
+        finalDiv.classList.add('hidden');
+      }
+    }
+
+    // Simple confetti effect
+    function launchConfetti() {
+      for (let i = 0; i < 80; i++) {
+        setTimeout(() => {
+          console.log("%c🎉", "font-size: 30px; color: #f59e0b");
+        }, i * 6);
+      }
+    }
+
     // Tab switching (updated to call render when needed)
     function setTab(n) {
       document.querySelectorAll('#panel0,#panel1,#panel2,#panel3,#panel4').forEach(panel => {
@@ -286,16 +444,119 @@
 
       if (n === 0) renderMatches();
       if (n === 1) renderPlayers();
-      if (n === 2) renderPredictions();     // ← New
+      if (n === 2) renderPredictions();
+      if (n === 3) renderResults();      // ← New
+      if (n === 4) calculateScores();    // ← New
     }
 
     window.onload = () => {
-      loadDefaultMatches();
-      // No loadDefaultPlayers() anymore
+      loadFromLocalStorage();
       setTab(0);
-      console.log("%c✅ Step 2 complete - Players tab added (starts empty)!", "color:#f59e0b");
+      enableAutoSave();
+
+      console.log("%c✅ Step 5 Complete! Full app is now ready 🎉", "color:#f59e0b; font-size:16px");
+    };
+    // ====================== PERSISTENCE & REUSABILITY ======================
+
+    function saveToLocalStorage() {
+      const data = {
+        eventName: document.getElementById('eventName').value.trim(),
+        matches: matches,
+        players: players
+      };
+      localStorage.setItem('pickemData', JSON.stringify(data));
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('pickemData');
+      if (saved) {
+        const data = JSON.parse(saved);
+        document.getElementById('eventName').value = data.eventName || "";
+
+        matches = data.matches || [];
+        players = data.players || [];
+      }
+    }
+
+    // New Event
+    window.newEvent = function() {
+      if (confirm("Start a completely new event? All current data will be lost.")) {
+        localStorage.removeItem('pickemData');
+        matches = [];
+        players = [];
+        document.getElementById('eventName').value = "";
+        setTab(0);
+      }
     };
 
+    // Export
+    window.exportEvent = function() {
+      saveToLocalStorage();
+      const data = {
+        eventName: document.getElementById('eventName').value.trim() || "Untitled Event",
+        matches: matches,
+        players: players
+      };
+      const encoded = btoa(JSON.stringify(data));
+      navigator.clipboard.writeText(encoded).then(() => {
+        alert("✅ Event exported to clipboard!\n\nPaste it somewhere safe or send to friends.");
+      });
+    };
+
+    // Import
+    window.showImportModal = function() {
+      document.getElementById('importModal').classList.remove('hidden');
+    };
+
+    window.hideImportModal = function() {
+      document.getElementById('importModal').classList.add('hidden');
+    };
+
+    window.importEvent = function() {
+      const code = document.getElementById('importCode').value.trim();
+      try {
+        const data = JSON.parse(atob(code));
+
+        document.getElementById('eventName').value = data.eventName || "";
+        matches = data.matches || [];
+        players = data.players || [];
+
+        hideImportModal();
+        saveToLocalStorage();
+        setTab(0);
+        alert("✅ Event loaded successfully!");
+      } catch (e) {
+        alert("❌ Invalid code. Please check and try again.");
+      }
+    };
+
+    // Auto-save every 2 seconds + on tab changes
+    function enableAutoSave() {
+      setInterval(saveToLocalStorage, 2000);
+    }
+
+    // Update setTab to save when switching tabs
+    const originalSetTab = setTab;
+    window.setTab = function(n) {
+      originalSetTab(n);
+      saveToLocalStorage();
+    };
   </script>
+
+  <!-- Import Modal -->
+  <div id="importModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+    <div class="bg-gray-900 rounded-3xl p-8 w-full max-w-md mx-4">
+      <h3 class="text-2xl font-bold mb-4">Import Event</h3>
+      <textarea id="importCode" rows="6"
+                class="w-full bg-gray-800 border border-gray-600 rounded-2xl p-4 font-mono text-sm"
+                placeholder="Paste exported code here..."></textarea>
+      <div class="flex gap-4 mt-6">
+        <button onclick="hideImportModal()"
+                class="flex-1 py-4 text-gray-400 hover:text-white">Cancel</button>
+        <button onclick="importEvent()"
+                class="flex-1 py-4 bg-yellow-400 text-black font-bold rounded-2xl">Load Event</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
