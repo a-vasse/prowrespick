@@ -1,0 +1,22 @@
+body {
+  background: linear-gradient(180deg, #111827, #1f2937);
+}
+
+.tab-panel {
+  background-color: #1f2937;
+  border-radius: 1.5rem;
+  padding: 2rem;
+}
+
+.match-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.match-card:hover {
+  transform: translateY(-2px);
+}
+
+.tab-active {
+  border-bottom: 4px solid #f59e0b;
+  color: #f59e0b;
+}
