@@ -3,26 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProWres Pick App</title>
-  <!-- Tailwind CSS via CDN (super quick for tutorials) -->
+  <title>Pick 'Em • Any Event</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     body { background: linear-gradient(180deg, #111827, #1f2937); }
+    .match-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
     .tab-active { border-bottom: 4px solid #f59e0b; color: #f59e0b; }
   </style>
 </head>
 <body class="min-h-screen text-white pb-12">
   <div class="max-w-5xl mx-auto p-4">
-    <!-- Header -->
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-4xl font-bold flex items-center gap-3">
-        <span class="text-yellow-400">🤼‍♂️</span> PICK 'EM
-      </h1>
-      <div class="text-sm text-gray-400">WrestleMania 42 • April 18-19, 2026 • Las Vegas</div>
+      <h1 class="text-4xl font-bold flex items-center gap-3"><span class="text-yellow-400">🤼‍♂️</span> PICK 'EM</h1>
+      <div class="text-sm text-gray-400">Reusable for any event • WrestleMania 42 ready</div>
     </div>
 
-    <!-- Tabs (we'll make these clickable soon) -->
     <div class="flex border-b border-gray-700 mb-8 text-lg font-medium">
       <button onclick="setTab(0)" id="tab0" class="tab-active flex-1 py-4">Setup</button>
       <button onclick="setTab(1)" id="tab1" class="flex-1 py-4">Players</button>
@@ -31,31 +27,116 @@
       <button onclick="setTab(4)" id="tab4" class="flex-1 py-4">Leaderboard</button>
     </div>
 
-    <!-- Placeholder panels (we'll fill these one by one) -->
+    <!-- SETUP TAB -->
     <div id="panel0" class="bg-gray-900 rounded-3xl p-8">
-      <p class="text-center text-gray-400">Setup tab coming in the next step...</p>
+      <h2 class="text-2xl font-bold mb-4">Event Name</h2>
+      <input id="eventName" type="text" value="WrestleMania 42"
+             class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3 text-xl mb-8">
+
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">Matches</h2>
+        <button onclick="addMatch()" class="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-2xl font-medium">
+          <i class="fas fa-plus"></i> Add Match
+        </button>
+      </div>
+      <div id="matchesList" class="space-y-6"></div>
     </div>
-    <div id="panel1" class="hidden bg-gray-900 rounded-3xl p-8">Players tab</div>
-    <div id="panel2" class="hidden bg-gray-900 rounded-3xl p-8">Predictions tab</div>
-    <div id="panel3" class="hidden bg-gray-900 rounded-3xl p-8">Results tab</div>
-    <div id="panel4" class="hidden bg-gray-900 rounded-3xl p-8">Leaderboard tab</div>
+
+    <!-- Other panels still placeholders -->
+    <div id="panel1" class="hidden bg-gray-900 rounded-3xl p-8">Players tab coming next...</div>
+    <div id="panel2" class="hidden bg-gray-900 rounded-3xl p-8">Predictions tab coming next...</div>
+    <div id="panel3" class="hidden bg-gray-900 rounded-3xl p-8">Results tab coming next...</div>
+    <div id="panel4" class="hidden bg-gray-900 rounded-3xl p-8">Leaderboard tab coming next...</div>
   </div>
 
   <script>
-    // Basic tab switching function
-    function setTab(n) {
-      document.querySelectorAll('#panel0,#panel1,#panel2,#panel3,#panel4').forEach(panel => {
-        panel.classList.add('hidden');
-      });
-      document.getElementById(`panel${n}`).classList.remove('hidden');
+    // === DATA MODEL (this is the heart of the app) ===
+    let matches = []; // Each match: {id, title, participants: ["Option 1", "Option 2"], actualWinner: null}
 
-      // Highlight active tab
-      document.querySelectorAll('button[id^="tab"]').forEach(btn => btn.classList.remove('tab-active'));
-      document.getElementById(`tab${n}`).classList.add('tab-active');
+    // Default WrestleMania 42 matches (you can edit/delete anytime)
+    function loadDefaultMatches() {
+      matches = [
+        {id:1, title:"Undisputed WWE Championship", participants:["Cody Rhodes (c)", "Randy Orton"], actualWinner:null},
+        {id:2, title:"Women's World Championship", participants:["Stephanie Vaquer (c)", "Liv Morgan"], actualWinner:null},
+        {id:3, title:"Singles Match", participants:["Seth Rollins", "Gunther"], actualWinner:null},
+        {id:4, title:"Women's Intercontinental Championship", participants:["AJ Lee (c)", "Becky Lynch"], actualWinner:null},
+        {id:5, title:"Women's Tag Team Championship Fatal 4-Way", participants:["Nia Jax & Lash Legend (c)", "Charlotte Flair & Alexa Bliss", "Bayley & Lyra Valkyria", "The Bella Twins"], actualWinner:null}
+      ];
     }
 
-    // Start on Setup tab
-    window.onload = () => setTab(0);
+    // Render matches in Setup tab
+    function renderMatches() {
+      const container = document.getElementById('matchesList');
+      container.innerHTML = matches.map(m => `
+        <div class="match-card bg-gray-800 rounded-3xl p-6">
+          <div class="flex justify-between mb-4">
+            <input value="${m.title}" oninput="updateMatchTitle(${m.id}, this.value)"
+                   class="flex-1 bg-transparent text-xl font-bold focus:outline-none">
+            <button onclick="deleteMatch(${m.id})" class="text-red-400"><i class="fas fa-trash"></i></button>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            ${m.participants.map((p, i) => `
+              <div class="flex items-center bg-gray-700 rounded-2xl px-4 py-2">
+                <input value="${p}" oninput="updateParticipant(${m.id}, ${i}, this.value)"
+                       class="bg-transparent w-56 focus:outline-none">
+                <button onclick="removeParticipant(${m.id}, ${i})" class="ml-3 text-gray-400 hover:text-red-400">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            `).join('')}
+            <button onclick="addParticipant(${m.id})" class="text-yellow-400 flex items-center gap-1 text-sm">
+              <i class="fas fa-plus"></i> Add Option
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // CRUD functions for matches
+    function addMatch() {
+      const newId = Math.max(0, ...matches.map(m => m.id)) + 1;
+      matches.push({id: newId, title: "New Match", participants: ["Option 1", "Option 2"], actualWinner: null});
+      renderMatches();
+    }
+    function deleteMatch(id) {
+      matches = matches.filter(m => m.id !== id);
+      renderMatches();
+    }
+    function updateMatchTitle(id, title) {
+      const match = matches.find(m => m.id === id);
+      if (match) match.title = title;
+    }
+    function addParticipant(id) {
+      const match = matches.find(m => m.id === id);
+      if (match) match.participants.push("New Option");
+      renderMatches();
+    }
+    function updateParticipant(id, idx, val) {
+      const match = matches.find(m => m.id === id);
+      if (match) match.participants[idx] = val;
+    }
+    function removeParticipant(id, idx) {
+      const match = matches.find(m => m.id === id);
+      if (match) match.participants.splice(idx, 1);
+      renderMatches();
+    }
+
+    // Tab switching (updated to call render when needed)
+    function setTab(n) {
+      document.querySelectorAll('#panel0,#panel1,#panel2,#panel3,#panel4').forEach(panel => panel.classList.add('hidden'));
+      document.getElementById(`panel${n}`).classList.remove('hidden');
+
+      document.querySelectorAll('button[id^="tab"]').forEach(btn => btn.classList.remove('tab-active'));
+      document.getElementById(`tab${n}`).classList.add('tab-active');
+
+      if (n === 0) renderMatches(); // Refresh Setup tab every time we visit
+    }
+
+    window.onload = () => {
+      loadDefaultMatches();
+      setTab(0);
+      console.log("%c✅ Step 1 complete - Setup tab is live!", "color:#f59e0b");
+    };
   </script>
 </body>
 </html>
