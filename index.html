@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProWres Pick App</title>
+  <!-- Tailwind CSS via CDN (super quick for tutorials) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { background: linear-gradient(180deg, #111827, #1f2937); }
+    .tab-active { border-bottom: 4px solid #f59e0b; color: #f59e0b; }
+  </style>
+</head>
+<body class="min-h-screen text-white pb-12">
+  <div class="max-w-5xl mx-auto p-4">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-4xl font-bold flex items-center gap-3">
+        <span class="text-yellow-400">🤼‍♂️</span> PICK 'EM
+      </h1>
+      <div class="text-sm text-gray-400">WrestleMania 42 • April 18-19, 2026 • Las Vegas</div>
+    </div>
+
+    <!-- Tabs (we'll make these clickable soon) -->
+    <div class="flex border-b border-gray-700 mb-8 text-lg font-medium">
+      <button onclick="setTab(0)" id="tab0" class="tab-active flex-1 py-4">Setup</button>
+      <button onclick="setTab(1)" id="tab1" class="flex-1 py-4">Players</button>
+      <button onclick="setTab(2)" id="tab2" class="flex-1 py-4">Predictions</button>
+      <button onclick="setTab(3)" id="tab3" class="flex-1 py-4">Results</button>
+      <button onclick="setTab(4)" id="tab4" class="flex-1 py-4">Leaderboard</button>
+    </div>
+
+    <!-- Placeholder panels (we'll fill these one by one) -->
+    <div id="panel0" class="bg-gray-900 rounded-3xl p-8">
+      <p class="text-center text-gray-400">Setup tab coming in the next step...</p>
+    </div>
+    <div id="panel1" class="hidden bg-gray-900 rounded-3xl p-8">Players tab</div>
+    <div id="panel2" class="hidden bg-gray-900 rounded-3xl p-8">Predictions tab</div>
+    <div id="panel3" class="hidden bg-gray-900 rounded-3xl p-8">Results tab</div>
+    <div id="panel4" class="hidden bg-gray-900 rounded-3xl p-8">Leaderboard tab</div>
+  </div>
+
+  <script>
+    // Basic tab switching function
+    function setTab(n) {
+      document.querySelectorAll('#panel0,#panel1,#panel2,#panel3,#panel4').forEach(panel => {
+        panel.classList.add('hidden');
+      });
+      document.getElementById(`panel${n}`).classList.remove('hidden');
+
+      // Highlight active tab
+      document.querySelectorAll('button[id^="tab"]').forEach(btn => btn.classList.remove('tab-active'));
+      document.getElementById(`tab${n}`).classList.add('tab-active');
+    }
+
+    // Start on Setup tab
+    window.onload = () => setTab(0);
+  </script>
+</body>
+</html>
