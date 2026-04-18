@@ -134,27 +134,6 @@
       renderMatches();
     }
 
-    // Tab switching (updated to call render when needed)
-    function setTab(n) {
-      document.querySelectorAll('#panel0,#panel1,#panel2,#panel3,#panel4').forEach(panel => {
-        panel.classList.add('hidden');
-      });
-      document.getElementById(`panel${n}`).classList.remove('hidden');
-
-      document.querySelectorAll('button[id^="tab"]').forEach(btn => btn.classList.remove('tab-active'));
-      document.getElementById(`tab${n}`).classList.add('tab-active');
-
-      if (n === 0) renderMatches();
-      if (n === 1) renderPlayers();
-    }
-
-    window.onload = () => {
-      loadDefaultMatches();
-      // No loadDefaultPlayers() anymore
-      setTab(0);
-      console.log("%c✅ Step 2 complete - Players tab added (starts empty)!", "color:#f59e0b");
-    };
-
     // === PLAYERS DATA ===
     let players = [];   // Start empty - no default players
 
@@ -213,6 +192,109 @@
       const player = players.find(p => p.id === id);
       if (player) player.name = newName;
     }
+
+    // ====================== PREDICTIONS ======================
+
+    // Render the Predictions tab
+    function renderPredictions() {
+      const container = document.getElementById('predictionsContent');
+
+      if (players.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-16 text-gray-400">
+            <i class="fas fa-users text-6xl mb-6"></i>
+            <p class="text-xl">No players yet</p>
+            <p class="mt-2">Go to the Players tab and add some first</p>
+          </div>`;
+        return;
+      }
+      if (matches.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-400 py-12">No matches yet. Add some in Setup tab.</p>`;
+        return;
+      }
+
+      let html = '';
+
+      players.forEach(player => {
+        html += `
+          <div class="mb-12">
+            <div class="flex items-center gap-4 mb-6 border-b border-gray-700 pb-4">
+              <div class="text-3xl font-bold">${player.name}</div>
+              <button onclick="randomizePlayerPicks(${player.id})"
+                      class="text-sm bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-2xl flex items-center gap-2">
+                <i class="fas fa-dice"></i> Randomize Picks
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              ${matches.map(match => {
+                const currentPick = player.picks[match.id];
+                return `
+                  <div class="bg-gray-800 rounded-3xl p-6">
+                    <div class="font-medium text-yellow-400 mb-4">${match.title}</div>
+                    <div class="flex flex-wrap gap-3">
+                      ${match.participants.map(option => `
+                        <button
+                          onclick="makePick(${player.id}, ${match.id}, '${option.replace(/'/g, "\\'")}')"
+                          class="flex-1 min-w-[160px] px-5 py-4 rounded-2xl text-left transition-all
+                            ${currentPick === option ?
+                              'bg-yellow-400 text-black font-bold' :
+                              'bg-gray-700 hover:bg-gray-600'}">
+                          ${option}
+                        </button>
+                      `).join('')}
+                    </div>
+                  </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Make a prediction
+    window.makePick = function(playerId, matchId, winner) {
+      const player = players.find(p => p.id === playerId);
+      if (player) {
+        player.picks[matchId] = winner;
+        renderPredictions();   // Refresh the tab
+      }
+    };
+
+    // Randomize a player's picks (for fun)
+    window.randomizePlayerPicks = function(playerId) {
+      const player = players.find(p => p.id === playerId);
+      if (!player) return;
+
+      matches.forEach(match => {
+        const randomIndex = Math.floor(Math.random() * match.participants.length);
+        player.picks[match.id] = match.participants[randomIndex];
+      });
+
+      renderPredictions();
+    };
+    // Tab switching (updated to call render when needed)
+    function setTab(n) {
+      document.querySelectorAll('#panel0,#panel1,#panel2,#panel3,#panel4').forEach(panel => {
+        panel.classList.add('hidden');
+      });
+      document.getElementById(`panel${n}`).classList.remove('hidden');
+
+      document.querySelectorAll('button[id^="tab"]').forEach(btn => btn.classList.remove('tab-active'));
+      document.getElementById(`tab${n}`).classList.add('tab-active');
+
+      if (n === 0) renderMatches();
+      if (n === 1) renderPlayers();
+      if (n === 2) renderPredictions();     // ← New
+    }
+
+    window.onload = () => {
+      loadDefaultMatches();
+      // No loadDefaultPlayers() anymore
+      setTab(0);
+      console.log("%c✅ Step 2 complete - Players tab added (starts empty)!", "color:#f59e0b");
+    };
 
   </script>
 </body>
