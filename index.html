@@ -42,9 +42,22 @@
       <div id="matchesList" class="space-y-6"></div>
     </div>
 
-    <!-- Other panels still placeholders -->
-    <div id="panel1" class="hidden bg-gray-900 rounded-3xl p-8">Players tab coming next...</div>
-    <div id="panel2" class="hidden bg-gray-900 rounded-3xl p-8">Predictions tab coming next...</div>
+    <!-- Players Panel -->
+    <div id="panel1" class="hidden bg-gray-900 rounded-3xl p-8">
+      <h2 class="text-2xl font-bold mb-6">Players (max 5)</h2>
+      <div id="playersList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"></div>
+      <button onclick="addPlayer()"
+          class="mt-8 mx-auto block bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-4 rounded-2xl flex items-center gap-3">
+        <i class="fas fa-user-plus"></i> Add Player
+      </button>
+    </div>
+
+    <!-- Predictions Panel -->
+    <div id="panel2" class="hidden bg-gray-900 rounded-3xl p-8">
+      <h2 class="text-2xl font-bold mb-6">Predictions</h2>
+      <div id="predictionsContent" class="space-y-12"></div>
+    </div>
+
     <div id="panel3" class="hidden bg-gray-900 rounded-3xl p-8">Results tab coming next...</div>
     <div id="panel4" class="hidden bg-gray-900 rounded-3xl p-8">Leaderboard tab coming next...</div>
   </div>
@@ -123,20 +136,84 @@
 
     // Tab switching (updated to call render when needed)
     function setTab(n) {
-      document.querySelectorAll('#panel0,#panel1,#panel2,#panel3,#panel4').forEach(panel => panel.classList.add('hidden'));
+      document.querySelectorAll('#panel0,#panel1,#panel2,#panel3,#panel4').forEach(panel => {
+        panel.classList.add('hidden');
+      });
       document.getElementById(`panel${n}`).classList.remove('hidden');
 
       document.querySelectorAll('button[id^="tab"]').forEach(btn => btn.classList.remove('tab-active'));
       document.getElementById(`tab${n}`).classList.add('tab-active');
 
-      if (n === 0) renderMatches(); // Refresh Setup tab every time we visit
+      if (n === 0) renderMatches();
+      if (n === 1) renderPlayers();
     }
 
     window.onload = () => {
       loadDefaultMatches();
+      // No loadDefaultPlayers() anymore
       setTab(0);
-      console.log("%c✅ Step 1 complete - Setup tab is live!", "color:#f59e0b");
+      console.log("%c✅ Step 2 complete - Players tab added (starts empty)!", "color:#f59e0b");
     };
+
+    // === PLAYERS DATA ===
+    let players = [];   // Start empty - no default players
+
+    // Render all players
+    function renderPlayers() {
+      const container = document.getElementById('playersList');
+
+      if (players.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full text-center py-12 text-gray-400">
+            <i class="fas fa-users text-5xl mb-4"></i>
+            <p class="text-lg">No players yet</p>
+            <p class="text-sm mt-2">Click "Add Player" to get started</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = players.map(player => `
+        <div class="bg-gray-800 rounded-3xl p-6 text-center">
+          <input
+            value="${player.name}"
+            oninput="updatePlayerName(${player.id}, this.value)"
+            class="bg-transparent text-center text-2xl font-bold w-full focus:outline-none border-b border-transparent focus:border-yellow-400">
+
+          <button onclick="deletePlayer(${player.id})"
+                  class="mt-6 text-red-400 text-sm hover:text-red-500">
+            Remove
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Player CRUD functions
+    function addPlayer() {
+      if (players.length >= 5) {
+        alert("Maximum 5 players allowed!");
+        return;
+      }
+
+      const newId = players.length === 0 ? 1 : Math.max(...players.map(p => p.id)) + 1;
+      players.push({ id: newId, name: `Player ${players.length + 1}`, picks: {} });
+      renderPlayers();
+    }
+
+    function deletePlayer(id) {
+      if (players.length <= 1) {
+        alert("You need at least one player!");
+        return;
+      }
+      players = players.filter(p => p.id !== id);
+      renderPlayers();
+    }
+
+    function updatePlayerName(id, newName) {
+      const player = players.find(p => p.id === id);
+      if (player) player.name = newName;
+    }
+
   </script>
 </body>
 </html>
