@@ -1,4 +1,3 @@
-// js/data.js
 export let matches = [];
 export let players = [];
 

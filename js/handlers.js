@@ -1,4 +1,3 @@
-// js/handlers.js
 import { matches, players } from './data.js';
 import { renderMatches, renderPlayers, renderPredictions, renderResults, calculateScores } from './render.js';
 import { saveToLocalStorage } from './storage.js';
