@@ -3,7 +3,7 @@ import { matches, players } from './data.js';
 export function renderHeader() {
   document.getElementById('header').innerHTML = `
     <h1 class="text-4xl font-bold flex items-center gap-3">
-      <span class="text-yellow-400">👊🏻</span> プロレス RESULTS BETTING
+      <span class="text-yellow-400">👊🏻</span> Mania Oracle
     </h1>
     <div class="flex gap-3">
       <button onclick="newEvent()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-2xl flex items-center gap-2 text-sm">
@@ -170,7 +170,7 @@ export function calculateScores() {
   const container = document.getElementById('panel4');
   const scoredMatches = matches.filter(m => m.actualWinner);
   const total = matches.length;
-  const eventName = document.getElementById('eventName')?.value.trim() || "Pick 'Em";
+  const eventName = document.getElementById('eventName')?.value.trim() || "event";
 
   let html = `
     <h2 class="text-3xl font-bold mb-8 flex justify-between">
