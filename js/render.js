@@ -3,7 +3,7 @@ import { matches, players } from './data.js';
 export function renderHeader() {
   document.getElementById('header').innerHTML = `
     <h1 class="text-4xl font-bold flex items-center gap-3">
-      <span class="text-yellow-400">🤼‍♂️</span> PICK 'EM
+      <span class="text-yellow-400">👊🏻</span> プロレス RESULTS BETTING
     </h1>
     <div class="flex gap-3">
       <button onclick="newEvent()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-2xl flex items-center gap-2 text-sm">
@@ -170,6 +170,7 @@ export function calculateScores() {
   const container = document.getElementById('panel4');
   const scoredMatches = matches.filter(m => m.actualWinner);
   const total = matches.length;
+  const eventName = document.getElementById('eventName')?.value.trim() || "Pick 'Em";
 
   let html = `
     <h2 class="text-3xl font-bold mb-8 flex justify-between">
@@ -206,7 +207,7 @@ export function calculateScores() {
       <div class="mt-12 text-center py-12 bg-gradient-to-b from-yellow-900/30 to-transparent rounded-3xl border border-yellow-400">
         <div class="text-6xl mb-4">🏆</div>
         <div class="text-5xl font-black text-yellow-400 mb-2">${champ.name}</div>
-        <div class="text-2xl">is the Pick 'Em Champion!</div>
+        <div class="text-2xl">is the <span class="text-yellow-400">${eventName}</span> Champion!</div>
         <div class="mt-6 text-xl">${champ.correct}/${total} correct • ${champ.percentage}%</div>
       </div>`;
     launchConfetti();
