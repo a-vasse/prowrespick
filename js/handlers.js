@@ -53,7 +53,7 @@ export function updatePlayerName(id, name) {
 }
 
 export function updateEventName() {
-  saveToLocalStorage();
+  saveToLocalStorage(); 
 }
 
 export function makePick(playerId, matchId, winner) {

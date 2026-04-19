@@ -15,9 +15,9 @@ export function loadFromLocalStorage() {
   if (saved) {
     try {
       const data = JSON.parse(saved);
-      if (document.getElementById('eventName')) {
-        document.getElementById('eventName').value = data.eventName || "";
-      }
+
+      const nameInput = document.getElementById('eventName');
+      if (nameInput) nameInput.value = data.eventName || "";
 
       matches.length = 0;
       players.length = 0;

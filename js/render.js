@@ -31,9 +31,13 @@ export function renderTabs() {
 
 export function renderMatches() {
   const container = document.getElementById('panel0');
+
+  const currentName = document.getElementById('eventName')?.value || "";
+
   container.innerHTML = `
     <h2 class="text-2xl font-bold mb-4">Event Name</h2>
     <input id="eventName" type="text" placeholder="Enter Event Name..."
+           value="${currentName}"
            oninput="updateEventName()"
            class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3 text-xl mb-8">
 
@@ -164,26 +168,55 @@ export function renderResults() {
 
 export function calculateScores() {
   const container = document.getElementById('panel4');
-  const scored = matches.filter(m => m.actualWinner);
+  const scoredMatches = matches.filter(m => m.actualWinner);
+  const total = matches.length;
 
-  let html = `<h2 class="text-3xl font-bold mb-6">Leaderboard</h2>`;
+  let html = `
+    <h2 class="text-3xl font-bold mb-8 flex justify-between">
+      Leaderboard
+      <span class="text-yellow-400 text-lg font-normal">${scoredMatches.length}/${total} scored</span>
+    </h2>`;
 
-  const standings = players.map(p => {
-    let points = matches.filter(m => m.actualWinner && p.picks[m.id] === m.actualWinner).length;
-    return { name: p.name, points };
-  }).sort((a,b) => b.points - a.points);
+  const standings = players.map(player => {
+    let correct = matches.filter(m => m.actualWinner && player.picks[m.id] === m.actualWinner).length;
+    return {
+      name: player.name,
+      correct,
+      percentage: total > 0 ? Math.round((correct / total) * 100) : 0
+    };
+  }).sort((a, b) => b.correct - a.correct);
 
   standings.forEach((s, i) => {
     html += `
-      <div class="flex justify-between bg-gray-800 rounded-2xl p-6 mb-4">
-        <div class="text-xl">${i+1}. ${s.name}</div>
-        <div class="text-3xl font-bold">${s.points}</div>
+      <div class="flex items-center justify-between bg-gray-800 rounded-2xl px-6 py-5 mb-3">
+        <div class="flex items-center gap-4">
+          <span class="text-2xl font-bold text-yellow-400 w-8">${i+1}</span>
+          <span class="text-xl">${s.name}</span>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-bold">${s.correct}</div>
+          <div class="text-xs text-gray-400">${s.percentage}% correct</div>
+        </div>
       </div>`;
   });
 
-  if (scored.length === matches.length && matches.length > 0) {
-    html += `<div class="mt-12 text-center text-4xl font-bold text-yellow-400">🏆 ${standings[0].name} is the Champion! 🏆</div>`;
+  if (scoredMatches.length === total && total > 0) {
+    const champ = standings[0];
+    html += `
+      <div class="mt-12 text-center py-12 bg-gradient-to-b from-yellow-900/30 to-transparent rounded-3xl border border-yellow-400">
+        <div class="text-6xl mb-4">🏆</div>
+        <div class="text-5xl font-black text-yellow-400 mb-2">${champ.name}</div>
+        <div class="text-2xl">is the Pick 'Em Champion!</div>
+        <div class="mt-6 text-xl">${champ.correct}/${total} correct • ${champ.percentage}%</div>
+      </div>`;
+    launchConfetti();
   }
 
   container.innerHTML = html;
+}
+
+function launchConfetti() {
+  for (let i = 0; i < 100; i++) {
+    setTimeout(() => console.log("%c🎉", "font-size:35px;color:#f59e0b"), i * 5);
+  }
 }
