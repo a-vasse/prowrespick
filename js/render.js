@@ -1,5 +1,5 @@
 // js/render.js
-import { matches, players } from './data.js';
+import { matches, players, eventType } from './data.js';
 
 export function renderHeader() {
   document.getElementById('header').innerHTML = `
@@ -34,58 +34,77 @@ export function renderMatches() {
   const container = document.getElementById('panel0');
   const currentName = document.getElementById('eventName')?.value || "";
 
-  container.innerHTML = `
+  let html = `
     <h2 class="text-2xl font-bold mb-4">Event Name</h2>
     <input id="eventName" type="text" placeholder="Enter Event Name..."
            value="${currentName}"
            oninput="updateEventName()"
            class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3 text-xl mb-8">
 
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold mb-3">Event Type</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <button onclick="setEventType('mania')"
+                class="py-5 rounded-2xl font-bold transition-all ${eventType === 'mania' ? 'bg-yellow-400 text-black' : 'bg-gray-700 hover:bg-gray-600'}">
+          🎪 WrestleMania
+        </button>
+        <button onclick="setEventType('rumble')"
+                class="py-5 rounded-2xl font-bold transition-all ${eventType === 'rumble' ? 'bg-yellow-400 text-black' : 'bg-gray-700 hover:bg-gray-600'}">
+          🌟 Royal Rumble
+        </button>
+      </div>
+    </div>
+  `;
+
+  if (eventType === 'rumble') {
+    html += `
+      <div class="bg-yellow-900/30 border border-yellow-400 rounded-2xl p-6 mb-8">
+        <p class="text-yellow-400 font-medium">Royal Rumble Mode Activated</p>
+        <p class="text-sm text-gray-300 mt-2">Special Rumble fields will be available soon.</p>
+      </div>`;
+  }
+
+  html += `
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-bold">Matches</h2>
-      <button onclick="addMatch()"
-              class="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-2xl font-medium">
+      <button onclick="addMatch()" class="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-2xl font-medium">
         <i class="fas fa-plus"></i> Add Match
       </button>
     </div>
     <div id="matchesList" class="space-y-6"></div>
   `;
 
-  renderMatchesList();
+  container.innerHTML = html;
+  renderMatchesList();   // Call the helper
 }
 
 function renderMatchesList() {
   const list = document.getElementById('matchesList');
+  if (!list) return;
 
   if (matches.length === 0) {
-    list.innerHTML = `<p class="text-center py-16 text-gray-400">No matches yet.<br>Click "Add Match" to get started.</p>`;
+    list.innerHTML = `<p class="text-center py-16 text-gray-400">No matches yet.<br>Click "Add Match" to start building the card.</p>`;
     return;
   }
 
-  list.innerHTML = matches.map(match => `
+  list.innerHTML = matches.map(m => `
     <div class="match-card bg-gray-800 rounded-3xl p-6">
       <div class="flex justify-between mb-4">
-        <input value="${match.title}"
-               oninput="updateMatchTitle(${match.id}, this.value)"
+        <input value="${m.title}" oninput="updateMatchTitle(${m.id}, this.value)"
                class="flex-1 bg-transparent text-xl font-bold focus:outline-none">
-        <button onclick="deleteMatch(${match.id})" class="text-red-400 hover:text-red-500">
-          <i class="fas fa-trash"></i>
-        </button>
+        <button onclick="deleteMatch(${m.id})" class="text-red-400"><i class="fas fa-trash"></i></button>
       </div>
       <div class="flex flex-wrap gap-3">
-        ${match.participants.map((participant, i) => `
+        ${m.participants.map((p, i) => `
           <div class="flex items-center bg-gray-700 rounded-2xl px-4 py-2">
-            <input value="${participant}"
-                   oninput="updateParticipant(${match.id}, ${i}, this.value)"
+            <input value="${p}" oninput="updateParticipant(${m.id}, ${i}, this.value)"
                    class="bg-transparent w-56 focus:outline-none">
-            <button onclick="removeParticipant(${match.id}, ${i})"
-                    class="ml-3 text-gray-400 hover:text-red-400">
+            <button onclick="removeParticipant(${m.id}, ${i})" class="ml-3 text-gray-400 hover:text-red-400">
               <i class="fas fa-times"></i>
             </button>
           </div>
         `).join('')}
-        <button onclick="addParticipant(${match.id})"
-                class="text-yellow-400 flex items-center gap-1 text-sm px-4 py-2">
+        <button onclick="addParticipant(${m.id})" class="text-yellow-400 flex items-center gap-1 text-sm">
           <i class="fas fa-plus"></i> Add Option
         </button>
       </div>
@@ -95,41 +114,28 @@ function renderMatchesList() {
 
 export function renderPlayers() {
   const container = document.getElementById('panel1');
-
   container.innerHTML = `
     <h2 class="text-2xl font-bold mb-6">Players (max 5)</h2>
     <div id="playersList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"></div>
-
-    <button onclick="addPlayer()"
-            class="mt-8 mx-auto block bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-4 rounded-2xl flex items-center gap-3">
+    <button onclick="addPlayer()" class="mt-8 mx-auto block bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-4 rounded-2xl flex items-center gap-3">
       <i class="fas fa-user-plus"></i> Add Player
     </button>
   `;
-
   renderPlayersList();
 }
 
 function renderPlayersList() {
   const list = document.getElementById('playersList');
-
   if (players.length === 0) {
-    list.innerHTML = `
-      <div class="col-span-full text-center py-16 text-gray-400">
-        <i class="fas fa-users text-5xl mb-4"></i>
-        <p>No players yet</p>
-      </div>`;
+    list.innerHTML = `<div class="col-span-full text-center py-16 text-gray-400"><i class="fas fa-users text-5xl mb-4"></i><p>No players yet</p></div>`;
     return;
   }
 
-  list.innerHTML = players.map(player => `
+  list.innerHTML = players.map(p => `
     <div class="bg-gray-800 rounded-3xl p-6 text-center">
-      <input value="${player.name}"
-             oninput="updatePlayerName(${player.id}, this.value)"
+      <input value="${p.name}" oninput="updatePlayerName(${p.id}, this.value)"
              class="bg-transparent text-center text-2xl font-bold w-full focus:outline-none border-b border-transparent focus:border-yellow-400">
-      <button onclick="deletePlayer(${player.id})"
-              class="mt-6 text-red-400 text-sm hover:text-red-500">
-        Remove
-      </button>
+      <button onclick="deletePlayer(${p.id})" class="mt-6 text-red-400 text-sm hover:text-red-500">Remove</button>
     </div>
   `).join('');
 }
