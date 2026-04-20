@@ -4,13 +4,21 @@ import { saveToLocalStorage } from './storage.js';
 
 export function addMatch() {
   const newId = matches.length ? Math.max(...matches.map(m => m.id)) + 1 : 1;
-  matches.push({ id: newId, title: "New Match", participants: ["Option 1", "Option 2"], actualWinner: null });
+  matches.push({
+    id: newId,
+    title: "New Match",
+    participants: ["Option 1", "Option 2"],
+    actualWinner: null
+  });
   renderMatches();
 }
 
 export function deleteMatch(id) {
-  matches = matches.filter(m => m.id !== id);
-  renderMatches();
+  const index = matches.findIndex(m => m.id === id);
+  if (index !== -1) {
+    matches.splice(index, 1);
+    renderMatches();
+  }
 }
 
 export function updateMatchTitle(id, title) {
@@ -18,33 +26,47 @@ export function updateMatchTitle(id, title) {
   if (match) match.title = title;
 }
 
-export function addParticipant(id) {
-  const match = matches.find(m => m.id === id);
-  if (match) match.participants.push("New Option");
-  renderMatches();
+export function addParticipant(matchId) {
+  const match = matches.find(m => m.id === matchId);
+  if (match) {
+    match.participants.push("New Option");
+    renderMatches();
+  }
 }
 
-export function updateParticipant(id, idx, val) {
-  const match = matches.find(m => m.id === id);
-  if (match) match.participants[idx] = val;
+export function updateParticipant(matchId, index, value) {
+  const match = matches.find(m => m.id === matchId);
+  if (match) match.participants[index] = value;
 }
 
-export function removeParticipant(id, idx) {
-  const match = matches.find(m => m.id === id);
-  if (match) match.participants.splice(idx, 1);
-  renderMatches();
+export function removeParticipant(matchId, index) {
+  const match = matches.find(m => m.id === matchId);
+  if (match) {
+    match.participants.splice(index, 1);
+    renderMatches();
+  }
 }
 
 export function addPlayer() {
-  if (players.length >= 5) return alert("Maximum 5 players!");
+  if (players.length >= 5) {
+    alert("Maximum 5 players allowed!");
+    return;
+  }
   const newId = players.length ? Math.max(...players.map(p => p.id)) + 1 : 1;
-  players.push({ id: newId, name: `Player ${players.length + 1}`, picks: {} });
+  players.push({
+    id: newId,
+    name: `Player ${players.length + 1}`,
+    picks: {}
+  });
   renderPlayers();
 }
 
 export function deletePlayer(id) {
-  players = players.filter(p => p.id !== id);
-  renderPlayers();
+  const index = players.findIndex(p => p.id === id);
+  if (index !== -1) {
+    players.splice(index, 1);
+    renderPlayers();
+  }
 }
 
 export function updatePlayerName(id, name) {
@@ -52,21 +74,21 @@ export function updatePlayerName(id, name) {
   if (player) player.name = name;
 }
 
-export function updateEventName() {
-  saveToLocalStorage(); 
-}
-
 export function makePick(playerId, matchId, winner) {
   const player = players.find(p => p.id === playerId);
-  if (player) player.picks[matchId] = winner;
-  renderPredictions();
+  if (player) {
+    player.picks[matchId] = winner;
+    renderPredictions();
+  }
 }
 
 export function randomizePlayerPicks(playerId) {
   const player = players.find(p => p.id === playerId);
   if (!player) return;
-  matches.forEach(m => {
-    player.picks[m.id] = m.participants[Math.floor(Math.random() * m.participants.length)];
+
+  matches.forEach(match => {
+    const randomIndex = Math.floor(Math.random() * match.participants.length);
+    player.picks[match.id] = match.participants[randomIndex];
   });
   renderPredictions();
 }
@@ -80,18 +102,33 @@ export function setActualWinner(matchId, winner) {
   }
 }
 
+export function updateEventName() {
+  saveToLocalStorage();
+}
+
 export function setTab(n) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    panel.classList.add('hidden');
+  });
+
   document.getElementById(`panel${n}`).classList.remove('hidden');
 
-  document.querySelectorAll('button[id^="tab"]').forEach(btn => btn.classList.remove('tab-active'));
+  document.querySelectorAll('button[id^="tab"]').forEach(btn => {
+    btn.classList.remove('tab-active');
+  });
   document.getElementById(`tab${n}`).classList.add('tab-active');
 
-  if (n === 0) renderMatches();
-  if (n === 1) renderPlayers();
-  if (n === 2) renderPredictions();
-  if (n === 3) renderResults();
-  if (n === 4) calculateScores();
+  switch (n) {
+    case 0: renderMatches(); break;
+    case 1: renderPlayers(); break;
+    case 2: renderPredictions(); break;
+    case 3: renderResults(); break;
+    case 4: calculateScores(); break;
+  }
 
   saveToLocalStorage();
+}
+
+export function initializeGlobalHandlers() {
+  console.log("Global handlers initialized");
 }
