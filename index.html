@@ -1,68 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mania Oracle</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <style>
-    body { background: linear-gradient(180deg, #111827, #1f2937); }
-    .tab-active { border-bottom: 4px solid #f59e0b; color: #f59e0b; }
-    .match-card { transition: all 0.2s; }
-  </style>
-</head>
-<body class="min-h-screen text-white pb-12">
-  <div class="max-w-5xl mx-auto p-4">
-
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="text-4xl font-bold flex items-center gap-3">
-        <span class="text-yellow-400">👊🏻</span> Mania Oracle
-      </h1>
-      <div class="flex gap-3">
-        <button onclick="newEvent()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-2xl text-sm flex items-center gap-2">
-          <i class="fas fa-plus"></i> New Event
-        </button>
-        <button onclick="exportEvent()" class="px-5 py-2.5 bg-yellow-400 hover:bg-yellow-300 text-black font-bold rounded-2xl text-sm flex items-center gap-2">
-          <i class="fas fa-download"></i> Export
-        </button>
-        <button onclick="showImportModal()" class="px-5 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-2xl text-sm flex items-center gap-2">
-          <i class="fas fa-upload"></i> Import
-        </button>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div class="flex border-b border-gray-700 mb-8 text-lg font-medium" id="tabs"></div>
-
-    <!-- Panels -->
-    <div id="panel0" class="tab-panel"></div>
-    <div id="panel1" class="tab-panel hidden"></div>
-    <div id="panel2" class="tab-panel hidden"></div>
-    <div id="panel3" class="tab-panel hidden"></div>
-    <div id="panel4" class="tab-panel hidden"></div>
-  </div>
-
-  <!-- Import Modal -->
-  <div id="importModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50"></div>
-
 <script>
   // ==================== STATE ====================
   let eventName = "";
   let eventType = "mania";   // "mania" or "rumble"
   let matches = [];
   let players = [];
-
-  // Royal Rumble specific data
-  let rumbleData = {
-    mensWinner: "",
-    womensWinner: "",
-    mensFinal5: "",
-    womensFinal5: "",
-    mensSurprises: "",
-    womensSurprises: ""
-  };
 
   // ==================== RENDER FUNCTIONS ====================
   function renderTabs() {
@@ -98,73 +39,9 @@
       </div>
     `;
 
-    if (eventType === 'rumble') {
-      html += `
-        <div class="bg-yellow-900/30 border border-yellow-400 rounded-2xl p-6 mb-8">
-          <p class="text-yellow-400 font-medium">Royal Rumble Mode</p>
-        </div>
-
-        <div class="space-y-8">
-          <div>
-            <h3 class="text-xl font-bold mb-4">Men's Royal Rumble</h3>
-            <div class="grid grid-cols-1 gap-6">
-              <div>
-                <label class="block text-sm text-gray-400 mb-1">Winner</label>
-                <input type="text" id="mensWinner" value="${rumbleData.mensWinner}"
-                       oninput="updateRumbleField('mensWinner', this.value)"
-                       placeholder="Who wins the Men's Rumble?"
-                       class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-400 mb-1">Final 5 in the Ring</label>
-                <input type="text" id="mensFinal5" value="${rumbleData.mensFinal5}"
-                       oninput="updateRumbleField('mensFinal5', this.value)"
-                       placeholder="Enter 5 names separated by commas"
-                       class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-400 mb-1">3 Surprise Entrants</label>
-                <input type="text" id="mensSurprises" value="${rumbleData.mensSurprises}"
-                       oninput="updateRumbleField('mensSurprises', this.value)"
-                       placeholder="Enter 3 surprise names separated by commas"
-                       class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 class="text-xl font-bold mb-4">Women's Royal Rumble</h3>
-            <div class="grid grid-cols-1 gap-6">
-              <div>
-                <label class="block text-sm text-gray-400 mb-1">Winner</label>
-                <input type="text" id="womensWinner" value="${rumbleData.womensWinner}"
-                       oninput="updateRumbleField('womensWinner', this.value)"
-                       placeholder="Who wins the Women's Rumble?"
-                       class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-400 mb-1">Final 5 in the Ring</label>
-                <input type="text" id="womensFinal5" value="${rumbleData.womensFinal5}"
-                       oninput="updateRumbleField('womensFinal5', this.value)"
-                       placeholder="Enter 5 names separated by commas"
-                       class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-400 mb-1">3 Surprise Entrants</label>
-                <input type="text" id="womensSurprises" value="${rumbleData.womensSurprises}"
-                       oninput="updateRumbleField('womensSurprises', this.value)"
-                       placeholder="Enter 3 surprise names separated by commas"
-                       class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
     html += `
-      <div class="flex justify-between items-center mb-6 mt-10">
-        <h2 class="text-2xl font-bold">Other Matches</h2>
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">Matches on the Card</h2>
         <button onclick="addMatch()" class="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-2xl font-medium">
           <i class="fas fa-plus"></i> Add Match
         </button>
@@ -210,7 +87,119 @@
     `).join('');
   }
 
-  // ==================== HELPER FUNCTIONS ====================
+  function renderPlayers() {
+    const container = document.getElementById('panel1');
+    container.innerHTML = `
+      <h2 class="text-2xl font-bold mb-6">Players (max 5)</h2>
+      <div id="playersList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"></div>
+      <button onclick="addPlayer()" class="mt-8 mx-auto block bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-8 py-4 rounded-2xl flex items-center gap-3">
+        <i class="fas fa-user-plus"></i> Add Player
+      </button>
+    `;
+    renderPlayersList();
+  }
+
+  function renderPlayersList() {
+    const list = document.getElementById('playersList');
+    if (players.length === 0) {
+      list.innerHTML = `<div class="col-span-full text-center py-16 text-gray-400"><i class="fas fa-users text-5xl mb-4"></i><p>No players yet</p></div>`;
+      return;
+    }
+
+    list.innerHTML = players.map(p => `
+      <div class="bg-gray-800 rounded-3xl p-6 text-center">
+        <input value="${p.name}" oninput="updatePlayerName(${p.id}, this.value)"
+               class="bg-transparent text-center text-2xl font-bold w-full focus:outline-none border-b border-transparent focus:border-yellow-400">
+        <button onclick="deletePlayer(${p.id})" class="mt-6 text-red-400 text-sm hover:text-red-500">Remove</button>
+      </div>
+    `).join('');
+  }
+
+  function renderPredictions() {
+    const container = document.getElementById('panel2');
+    if (players.length === 0) {
+      container.innerHTML = `<p class="text-center py-20 text-gray-400">Add players first in the Players tab.</p>`;
+      return;
+    }
+
+    let html = `<h2 class="text-2xl font-bold mb-8">Predictions</h2>`;
+
+    players.forEach((player, playerIndex) => {
+      html += `
+        <div class="mb-10 bg-gray-900 rounded-3xl p-6">
+          <div class="text-2xl font-bold mb-6 border-b border-gray-700 pb-4">${player.name}'s Picks</div>
+      `;
+
+      if (eventType === 'rumble') {
+        html += `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">Men's Royal Rumble Winner</label>
+              <input type="text" id="rumble_mens_${playerIndex}" placeholder="Who wins Men's Rumble?"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">Women's Royal Rumble Winner</label>
+              <input type="text" id="rumble_womens_${playerIndex}" placeholder="Who wins Women's Rumble?"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">Final 5 - Men's Rumble</label>
+              <input type="text" id="rumble_mens_final_${playerIndex}" placeholder="5 names, comma separated"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">Final 5 - Women's Rumble</label>
+              <input type="text" id="rumble_womens_final_${playerIndex}" placeholder="5 names, comma separated"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">3 Surprise Entrants - Men's</label>
+              <input type="text" id="rumble_mens_surprise_${playerIndex}" placeholder="3 names, comma separated"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">3 Surprise Entrants - Women's</label>
+              <input type="text" id="rumble_womens_surprise_${playerIndex}" placeholder="3 names, comma separated"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+          </div>
+        `;
+      } else {
+        // WrestleMania normal picks
+        html += `
+          <div class="text-sm text-gray-400 mb-4">Match Predictions</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${matches.map((match, idx) => `
+              <div class="bg-gray-800 rounded-2xl p-4">
+                <div class="font-medium mb-3">${match.title}</div>
+                <div class="flex flex-wrap gap-2">
+                  ${match.participants.map(opt => `
+                    <button onclick="makePick(${playerIndex}, ${idx}, '${opt.replace(/'/g, "\\'")}')"
+                            class="px-4 py-2 rounded-xl text-sm bg-gray-700 hover:bg-gray-600">
+                      ${opt}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ==================== BASIC FUNCTIONS ====================
   function updateEventName() {
     eventName = document.getElementById('eventName').value;
   }
@@ -231,30 +220,26 @@
     renderSetup();
   }
 
-  function updateMatchTitle(id, title) {
-    const match = matches.find(m => m.id === id);
-    if (match) match.title = title;
+  function addPlayer() {
+    if (players.length >= 5) return alert("Maximum 5 players!");
+    const newId = players.length ? Math.max(...players.map(p => p.id)) + 1 : 1;
+    players.push({ id: newId, name: `Player ${players.length + 1}`, picks: {} });
+    renderPlayers();
   }
 
-  function addParticipant(matchId) {
-    const match = matches.find(m => m.id === matchId);
-    if (match) match.participants.push("New Option");
-    renderSetup();
+  function deletePlayer(id) {
+    players = players.filter(p => p.id !== id);
+    renderPlayers();
   }
 
-  function updateParticipant(matchId, idx, val) {
-    const match = matches.find(m => m.id === matchId);
-    if (match) match.participants[idx] = val;
+  function updatePlayerName(id, name) {
+    const player = players.find(p => p.id === id);
+    if (player) player.name = name;
   }
 
-  function removeParticipant(matchId, idx) {
-    const match = matches.find(m => m.id === matchId);
-    if (match) match.participants.splice(idx, 1);
-    renderSetup();
-  }
-
-  function updateRumbleField(field, value) {
-    rumbleData[field] = value;
+  function makePick(playerIndex, matchIndex, winner) {
+    // Basic placeholder for now
+    alert(`Player ${players[playerIndex].name} picked ${winner} for match ${matchIndex}`);
   }
 
   function setTab(n) {
@@ -265,14 +250,14 @@
     document.getElementById(`tab${n}`).classList.add('tab-active');
 
     if (n === 0) renderSetup();
+    if (n === 1) renderPlayers();
+    if (n === 2) renderPredictions();
   }
 
   // Init
   window.onload = () => {
     renderTabs();
     setTab(0);
-    console.log("%c✅ Dual-mode app ready - Rumble mode enabled", "color:#f59e0b");
+    console.log("%c✅ Dual-mode app with Rumble predictions", "color:#f59e0b");
   };
 </script>
-</body>
-</html>
