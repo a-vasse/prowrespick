@@ -1,10 +1,13 @@
-import { matches, players, resetAllData } from './data.js';
+// js/storage.js
+import { matches, players, eventType, rumbleData, resetAllData } from './data.js';
 
 export function saveToLocalStorage() {
   const data = {
     eventName: document.getElementById('eventName')?.value.trim() || "",
+    eventType: eventType,
     matches: matches,
-    players: players
+    players: players,
+    rumbleData: rumbleData
   };
   localStorage.setItem('pickemData', JSON.stringify(data));
 }
@@ -16,13 +19,25 @@ export function loadFromLocalStorage() {
   try {
     const data = JSON.parse(saved);
 
+    // Restore event name
     const nameInput = document.getElementById('eventName');
     if (nameInput) nameInput.value = data.eventName || "";
 
+    // Restore event type (using the state object)
+    if (data.eventType) {
+      state.eventType = data.eventType;
+    }
+
+    // Restore arrays
     matches.length = 0;
     players.length = 0;
     matches.push(...(data.matches || []));
     players.push(...(data.players || []));
+
+    // Restore Rumble data
+    if (data.rumbleData) {
+      Object.assign(rumbleData, data.rumbleData);
+    }
 
   } catch (e) {
     console.error("Failed to load saved data:", e);
@@ -32,6 +47,7 @@ export function loadFromLocalStorage() {
 export function enableAutoSave() {
   setInterval(saveToLocalStorage, 2000);
 }
+
 
 export function newEvent() {
   if (!confirm("Start a completely new event?\n\nAll current data will be lost.")) {
@@ -54,19 +70,21 @@ export function exportEvent() {
 
     const data = {
       eventName: document.getElementById('eventName')?.value.trim() || "Untitled Event",
+      eventType: eventType,
       matches: matches,
-      players: players
+      players: players,
+      rumbleData: rumbleData
     };
 
     const encoded = btoa(JSON.stringify(data));
 
     navigator.clipboard.writeText(encoded).then(() => {
-      alert(`✅ Export Successful!\n\n${data.eventName}\n${data.matches.length} matches • ${data.players.length} players\n\nCode copied to clipboard.`);
+      alert(`✅ Export Successful!\n\n${data.eventName}\nMode: ${data.eventType === 'rumble' ? 'Royal Rumble' : 'WrestleMania'}\n\nCode copied to clipboard.`);
     });
 
   } catch (error) {
     console.error("Export failed:", error);
-    alert("❌ Failed to export. Check console for details.");
+    alert("❌ Failed to export event. Check console for details.");
   }
 }
 
@@ -102,15 +120,21 @@ export function importEvent() {
   try {
     const data = JSON.parse(atob(code));
 
-    // Restore event name
     const nameInput = document.getElementById('eventName');
     if (nameInput) nameInput.value = data.eventName || "";
 
-    // Restore data
+    if (data.eventType) {
+      eventType = data.eventType;
+    }
+
     matches.length = 0;
     players.length = 0;
     matches.push(...(data.matches || []));
     players.push(...(data.players || []));
+
+    if (data.rumbleData) {
+      Object.assign(rumbleData, data.rumbleData);
+    }
 
     hideImportModal();
     saveToLocalStorage();

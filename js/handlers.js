@@ -1,4 +1,5 @@
-import { matches, players, eventType } from './data.js';
+import { matches, players } from './data.js';
+
 import {
   renderMatches,
   renderPlayers,
@@ -54,9 +55,16 @@ export function removeParticipant(matchId, index) {
 }
 
 export function addPlayer() {
-  if (players.length >= 5) return alert("Maximum 5 players!");
+  if (players.length >= 5) {
+    alert("Maximum 5 players allowed!");
+    return;
+  }
   const newId = players.length ? Math.max(...players.map(p => p.id)) + 1 : 1;
-  players.push({ id: newId, name: `Player ${players.length + 1}`, picks: {} });
+  players.push({
+    id: newId,
+    name: `Player ${players.length + 1}`,
+    picks: {}
+  });
   renderPlayers();
 }
 
@@ -84,8 +92,10 @@ export function makePick(playerId, matchId, winner) {
 export function randomizePlayerPicks(playerId) {
   const player = players.find(p => p.id === playerId);
   if (!player) return;
-  matches.forEach(m => {
-    player.picks[m.id] = m.participants[Math.floor(Math.random() * m.participants.length)];
+
+  matches.forEach(match => {
+    const randomIndex = Math.floor(Math.random() * match.participants.length);
+    player.picks[match.id] = match.participants[randomIndex];
   });
   renderPredictions();
 }
@@ -100,7 +110,7 @@ export function setActualWinner(matchId, winner) {
 }
 
 export function setEventType(type) {
-  eventType = type;
+  window.eventType = type;   
   renderMatches();
   saveToLocalStorage();
 }
@@ -110,11 +120,19 @@ export function updateEventName() {
 }
 
 export function setTab(n) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-  document.getElementById(`panel${n}`).classList.remove('hidden');
+  // Hide all panels
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    panel.classList.add('hidden');
+  });
 
-  document.querySelectorAll('button[id^="tab"]').forEach(btn => btn.classList.remove('tab-active'));
-  document.getElementById(`tab${n}`).classList.add('tab-active');
+  const selectedPanel = document.getElementById(`panel${n}`);
+  if (selectedPanel) selectedPanel.classList.remove('hidden');
+
+  document.querySelectorAll('button[id^="tab"]').forEach(btn => {
+    btn.classList.remove('tab-active');
+  });
+  const activeTab = document.getElementById(`tab${n}`);
+  if (activeTab) activeTab.classList.add('tab-active');
 
   switch (n) {
     case 0: renderMatches(); break;

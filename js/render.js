@@ -60,13 +60,58 @@ export function renderMatches() {
     html += `
       <div class="bg-yellow-900/30 border border-yellow-400 rounded-2xl p-6 mb-8">
         <p class="text-yellow-400 font-medium">Royal Rumble Mode Activated</p>
-        <p class="text-sm text-gray-300 mt-2">Special Rumble fields will be available soon.</p>
-      </div>`;
+        <p class="text-sm text-gray-300 mt-2">Configure the Rumble predictions below.</p>
+      </div>
+
+      <div class="space-y-10">
+        <div>
+          <h3 class="text-xl font-bold mb-4">Men's Royal Rumble</h3>
+          <div class="grid grid-cols-1 gap-6">
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">Winner</label>
+              <input type="text" id="mensWinner" placeholder="Who wins the Men's Rumble?"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">Final 5 in the Ring</label>
+              <input type="text" id="mensFinal5" placeholder="Enter 5 names separated by commas"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">3 Surprise Entrants</label>
+              <input type="text" id="mensSurprises" placeholder="Enter 3 surprise names separated by commas"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-xl font-bold mb-4">Women's Royal Rumble</h3>
+          <div class="grid grid-cols-1 gap-6">
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">Winner</label>
+              <input type="text" id="womensWinner" placeholder="Who wins the Women's Rumble?"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">Final 5 in the Ring</label>
+              <input type="text" id="womensFinal5" placeholder="Enter 5 names separated by commas"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">3 Surprise Entrants</label>
+              <input type="text" id="womensSurprises" placeholder="Enter 3 surprise names separated by commas"
+                     class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   html += `
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-bold">Matches</h2>
+    <div class="flex justify-between items-center mb-6 mt-10">
+      <h2 class="text-2xl font-bold">Other Matches</h2>
       <button onclick="addMatch()" class="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-2 rounded-2xl font-medium">
         <i class="fas fa-plus"></i> Add Match
       </button>
@@ -75,7 +120,11 @@ export function renderMatches() {
   `;
 
   container.innerHTML = html;
-  renderMatchesList();   // Call the helper
+  renderMatchesList();
+
+  if (eventType === 'rumble') {
+    setTimeout(attachRumbleListeners, 100);
+  }
 }
 
 function renderMatchesList() {
@@ -112,6 +161,14 @@ function renderMatchesList() {
   `).join('');
 }
 
+function attachRumbleListeners() {
+  const fields = ['mensWinner', 'womensWinner', 'mensFinal5', 'womensFinal5', 'mensSurprises', 'womensSurprises'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', saveToLocalStorage);
+  });
+}
+
 export function renderPlayers() {
   const container = document.getElementById('panel1');
   container.innerHTML = `
@@ -142,7 +199,6 @@ function renderPlayersList() {
 
 export function renderPredictions() {
   const container = document.getElementById('panel2');
-
   if (players.length === 0) {
     container.innerHTML = `<p class="text-center py-20 text-gray-400">Add some players first.</p>`;
     return;
@@ -158,8 +214,7 @@ export function renderPredictions() {
       <div class="mb-12">
         <div class="flex items-center gap-4 mb-6">
           <div class="text-3xl font-bold">${player.name}</div>
-          <button onclick="randomizePlayerPicks(${player.id})"
-                  class="text-sm bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-2xl flex items-center gap-2">
+          <button onclick="randomizePlayerPicks(${player.id})" class="text-sm bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-2xl flex items-center gap-2">
             🎲 Randomize
           </button>
         </div>
@@ -168,7 +223,6 @@ export function renderPredictions() {
         </div>
       </div>`;
   });
-
   container.innerHTML = html;
 }
 
@@ -180,8 +234,7 @@ function createMatchPredictionHTML(player, match) {
       <div class="flex flex-wrap gap-3">
         ${match.participants.map(opt => `
           <button onclick="makePick(${player.id}, ${match.id}, '${opt.replace(/'/g, "\\'")}')"
-                  class="flex-1 px-5 py-4 rounded-2xl text-left transition-all
-                    ${picked === opt ? 'bg-yellow-400 text-black font-bold' : 'bg-gray-700 hover:bg-gray-600'}">
+                  class="flex-1 px-5 py-4 rounded-2xl text-left transition-all ${picked === opt ? 'bg-yellow-400 text-black font-bold' : 'bg-gray-700 hover:bg-gray-600'}">
             ${opt}
           </button>
         `).join('')}
@@ -263,8 +316,6 @@ export function calculateScores() {
 
 function launchConfetti() {
   for (let i = 0; i < 100; i++) {
-    setTimeout(() => {
-      console.log("%c🎉", "font-size:35px;color:#f59e0b");
-    }, i * 5);
+    setTimeout(() => console.log("%c🎉", "font-size:35px;color:#f59e0b"), i * 5);
   }
 }
