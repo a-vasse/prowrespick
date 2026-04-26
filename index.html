@@ -57,6 +57,19 @@
   // Per-player Rumble predictions
   let playerRumblePicks = {};
 
+  // Results
+  let results = {
+    normalMatches: {},     // matchIndex -> winner
+    rumble: {
+      mensWinner: "",
+      womensWinner: "",
+      mensFinal5: "",
+      womensFinal5: "",
+      mensSurprises: "",
+      womensSurprises: ""
+    }
+  };
+
   // ==================== RENDER FUNCTIONS ====================
   function renderTabs() {
     document.getElementById('tabs').innerHTML = `
@@ -275,6 +288,208 @@
     container.innerHTML = html;
   }
 
+function renderResults() {
+  const container = document.getElementById('panel3');
+  let html = `<h2 class="text-2xl font-bold mb-8">Enter Real Results</h2>`;
+
+  // Normal matches results
+  if (matches.length > 0) {
+    html += `<div class="mb-10"><div class="text-sm text-gray-400 mb-4">Other Matches Results</div>`;
+    matches.forEach((match, matchIndex) => {
+      const realWinner = results.normalMatches[matchIndex] || "";
+      html += `
+        <div class="bg-gray-800 rounded-3xl p-6 mb-6">
+          <div class="font-bold mb-4">${match.title}</div>
+          <div class="flex flex-wrap gap-3">
+            ${match.participants.map(opt => `
+              <button onclick="setRealWinner(${matchIndex}, '${opt.replace(/'/g, "\\'")}')"
+                      class="flex-1 px-6 py-4 rounded-2xl ${realWinner === opt ? 'bg-yellow-400 text-black' : 'bg-gray-700 hover:bg-gray-600'}">
+                ${opt}
+              </button>
+            `).join('')}
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Rumble results section
+  if (eventType === 'rumble') {
+    html += `
+      <div class="bg-gray-900 rounded-3xl p-6">
+        <div class="text-sm text-gray-400 mb-4">Royal Rumble Results</div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Men's Rumble Winner</label>
+            <input type="text" value="${results.rumble.mensWinner}"
+                   oninput="updateRealRumbleField('mensWinner', this.value)"
+                   placeholder="Actual Men's Rumble winner"
+                   class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Women's Rumble Winner</label>
+            <input type="text" value="${results.rumble.womensWinner}"
+                   oninput="updateRealRumbleField('womensWinner', this.value)"
+                   placeholder="Actual Women's Rumble winner"
+                   class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Final 5 - Men's Rumble</label>
+            <input type="text" value="${results.rumble.mensFinal5}"
+                   oninput="updateRealRumbleField('mensFinal5', this.value)"
+                   placeholder="5 actual names, comma separated"
+                   class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">Final 5 - Women's Rumble</label>
+            <input type="text" value="${results.rumble.womensFinal5}"
+                   oninput="updateRealRumbleField('womensFinal5', this.value)"
+                   placeholder="5 actual names, comma separated"
+                   class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">3 Surprise Entrants - Men's</label>
+            <input type="text" value="${results.rumble.mensSurprises}"
+                   oninput="updateRealRumbleField('mensSurprises', this.value)"
+                   placeholder="3 actual surprise names, comma separated"
+                   class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-2">3 Surprise Entrants - Women's</label>
+            <input type="text" value="${results.rumble.womensSurprises}"
+                   oninput="updateRealRumbleField('womensSurprises', this.value)"
+                   placeholder="3 actual surprise names, comma separated"
+                   class="w-full bg-gray-800 border border-gray-600 rounded-2xl px-4 py-3">
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderLeaderboard() {
+  const container = document.getElementById('panel4');
+  let html = `<h2 class="text-3xl font-bold mb-8">Leaderboard</h2>`;
+
+  if (players.length === 0) {
+    html += `<p class="text-center py-20 text-gray-400">Add players first.</p>`;
+    container.innerHTML = html;
+    return;
+  }
+
+  // Calculate total possible points
+  let totalPossible = matches.length;           // normal matches
+
+  if (eventType === 'rumble') {
+    totalPossible += 2;        // 2 winners
+    totalPossible += 5;        // Men's Final 5 (1 per name)
+    totalPossible += 5;        // Women's Final 5 (1 per name)
+    totalPossible += 3;        // Men's Surprises (1 per name)
+    totalPossible += 3;        // Women's Surprises (1 per name)
+  }
+
+  const standings = players.map(player => {
+    let correct = 0;
+
+    // 1. Score normal matches (1 point each)
+    matches.forEach((match, idx) => {
+      if (results.normalMatches[idx] && player.picks[idx] === results.normalMatches[idx]) {
+        correct += 1;
+      }
+    });
+
+    // 2. Score Rumble predictions
+    if (eventType === 'rumble') {
+      const rumblePicks = getPlayerRumblePicks(player.id);
+
+      // Winners = 1 point each
+      if (rumblePicks.mensWinner && results.rumble.mensWinner &&
+          rumblePicks.mensWinner.toLowerCase().trim() === results.rumble.mensWinner.toLowerCase().trim()) {
+        correct += 1;
+      }
+      if (rumblePicks.womensWinner && results.rumble.womensWinner &&
+          rumblePicks.womensWinner.toLowerCase().trim() === results.rumble.womensWinner.toLowerCase().trim()) {
+        correct += 1;
+      }
+
+      // Final 5 = 1 point per correct name (max 5)
+      if (rumblePicks.mensFinal5 && results.rumble.mensFinal5) {
+        const playerList = rumblePicks.mensFinal5.toLowerCase().split(',').map(n => n.trim());
+        const realList = results.rumble.mensFinal5.toLowerCase().split(',').map(n => n.trim());
+        const correctNames = playerList.filter(name => realList.includes(name)).length;
+        correct += correctNames;                    // 1 point per correct name
+      }
+      if (rumblePicks.womensFinal5 && results.rumble.womensFinal5) {
+        const playerList = rumblePicks.womensFinal5.toLowerCase().split(',').map(n => n.trim());
+        const realList = results.rumble.womensFinal5.toLowerCase().split(',').map(n => n.trim());
+        const correctNames = playerList.filter(name => realList.includes(name)).length;
+        correct += correctNames;
+      }
+
+      // Surprise Entrants = 1 point per correct surprise (max 3)
+      if (rumblePicks.mensSurprises && results.rumble.mensSurprises) {
+        const playerList = rumblePicks.mensSurprises.toLowerCase().split(',').map(n => n.trim());
+        const realList = results.rumble.mensSurprises.toLowerCase().split(',').map(n => n.trim());
+        const correctSurprises = playerList.filter(name => realList.includes(name)).length;
+        correct += correctSurprises;
+      }
+      if (rumblePicks.womensSurprises && results.rumble.womensSurprises) {
+        const playerList = rumblePicks.womensSurprises.toLowerCase().split(',').map(n => n.trim());
+        const realList = results.rumble.womensSurprises.toLowerCase().split(',').map(n => n.trim());
+        const correctSurprises = playerList.filter(name => realList.includes(name)).length;
+        correct += correctSurprises;
+      }
+    }
+
+    const percentage = totalPossible > 0 ? Math.round((correct / totalPossible) * 100) : 0;
+
+    return {
+      name: player.name,
+      correct: Math.round(correct * 10) / 10,
+      total: totalPossible,
+      percentage: percentage
+    };
+  }).sort((a, b) => b.correct - a.correct);
+
+  // Render standings
+  standings.forEach((s, i) => {
+    html += `
+      <div class="flex items-center justify-between bg-gray-800 rounded-2xl px-6 py-5 mb-3">
+        <div class="flex items-center gap-4">
+          <span class="text-2xl font-bold text-yellow-400 w-8">${i + 1}</span>
+          <span class="text-xl">${s.name}</span>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-bold">${s.correct}</div>
+          <div class="text-xs text-gray-400">${s.percentage}% correct (${s.correct}/${s.total})</div>
+        </div>
+      </div>`;
+  });
+
+  // Champion banner
+  if (totalPossible > 0) {
+    const champ = standings[0];
+    html += `
+      <div class="mt-12 text-center py-12 bg-gradient-to-b from-yellow-900/30 to-transparent rounded-3xl border border-yellow-400">
+        <div class="text-6xl mb-4">🏆</div>
+        <div class="text-5xl font-black text-yellow-400 mb-2">${champ.name}</div>
+        <div class="text-2xl">is the <span class="text-yellow-400">${eventName || "Event"}</span> Champion!</div>
+        <div class="mt-6 text-xl">${champ.correct} points • ${champ.percentage}%</div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
   // ==================== HELPER FUNCTIONS ====================
   function getPlayerRumblePicks(playerId) {
     if (!playerRumblePicks[playerId]) {
@@ -301,6 +516,17 @@
       player.picks[matchIndex] = winner;
       renderPredictions();
     }
+  }
+
+  function setRealWinner(matchIndex, winner) {
+    results.normalMatches[matchIndex] = winner;
+    renderResults();      // Keep this for normal matches (button highlight)
+    renderLeaderboard();
+  }
+
+  function updateRealRumbleField(field, value) {
+    results.rumble[field] = value;
+    renderLeaderboard();        // Only update leaderboard, don't re-render the whole Results tab
   }
 
   function updateEventName() {
@@ -375,13 +601,15 @@
     if (n === 0) renderSetup();
     if (n === 1) renderPlayers();
     if (n === 2) renderPredictions();
+    if (n === 3) renderResults();
+    if (n === 4) renderLeaderboard();
   }
 
   // Init
   window.onload = () => {
     renderTabs();
     setTab(0);
-    console.log("%c✅ App updated - Predictions now show matches in both modes", "color:#f59e0b");
+    console.log("%c✅ Current script loaded - Results tab added", "color:#f59e0b");
   };
 </script>
 </body>
